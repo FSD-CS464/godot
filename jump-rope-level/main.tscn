@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3 uid="uid://c414mvehf23un"]
+
+[ext_resource type="PackedScene" uid="uid://cprt1oc13scs8" path="res://jump-rope-level/player.tscn" id="1_qjgln"]
+[ext_resource type="PackedScene" uid="uid://cbn4jc6yslev8" path="res://jump-rope-level/rope.tscn" id="2_vy235"]
+[ext_resource type="PackedScene" uid="uid://c7uwc3l01o2rq" path="res://jump-rope-level/map.tscn" id="3_6u3o6"]
+
+[node name="main" type="Node2D"]
+
+[node name="Pet" parent="." instance=ExtResource("1_qjgln")]
+position = Vector2(568, 459)
+
+[node name="map" parent="." instance=ExtResource("3_6u3o6")]
+position = Vector2(566, 137)
+
+[node name="rope" parent="." instance=ExtResource("2_vy235")]
+position = Vector2(560, 236)
