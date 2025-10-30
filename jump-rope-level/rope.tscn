@@ -1,23 +1,22 @@
-[gd_scene load_steps=5 format=3 uid="uid://cbn4jc6yslev8"]
+[gd_scene load_steps=7 format=3 uid="uid://cbn4jc6yslev8"]
 
+[ext_resource type="Script" uid="uid://c3c6257pume6" path="res://jump-rope-level/rope.gd" id="1_d4myj"]
 [ext_resource type="Texture2D" uid="uid://0xbw8fh6nbxj" path="res://assets/jump-rope/rope/jumprope1.png" id="1_vgjkx"]
 [ext_resource type="Texture2D" uid="uid://cq8tml0wfb5r0" path="res://assets/jump-rope/rope/jumprope2.png" id="2_d4myj"]
 [ext_resource type="Texture2D" uid="uid://dtqrfmr4i3hgr" path="res://assets/jump-rope/rope/jumprope3.png" id="3_3ywyv"]
+[ext_resource type="Texture2D" uid="uid://ddyckxxrl3oa" path="res://assets/jump-rope/rope/jumprope4.png" id="4_3ywyv"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_oy386"]
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("1_vgjkx")
+"texture": ExtResource("2_d4myj")
 }],
 "loop": true,
 "name": &"default",
 "speed": 5.0
 }, {
 "frames": [{
-"duration": 1.0,
-"texture": ExtResource("1_vgjkx")
-}, {
 "duration": 1.0,
 "texture": ExtResource("2_d4myj")
 }, {
@@ -26,6 +25,15 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": ExtResource("2_d4myj")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_3ywyv")
+}, {
+"duration": 1.0,
+"texture": ExtResource("1_vgjkx")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_3ywyv")
 }],
 "loop": true,
 "name": &"swing",
@@ -33,12 +41,15 @@ animations = [{
 }]
 
 [node name="rope" type="Area2D"]
+script = ExtResource("1_d4myj")
 metadata/_edit_group_ = true
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 position = Vector2(5, -4)
 sprite_frames = SubResource("SpriteFrames_oy386")
 animation = &"swing"
+frame = 4
+speed_scale = 1.2
 
 [node name="CollisionPolygon2D" type="CollisionPolygon2D" parent="."]
 polygon = PackedVector2Array(-422, 219, -333, 288, -216, 346, -103, 377, -2, 387, 101, 378, 203, 348, 297, 304, 375, 254, 425, 217, 358, 253, 281, 304, 189, 343, 92, 371, -4, 378, -101, 368, -211, 339, -324, 284)

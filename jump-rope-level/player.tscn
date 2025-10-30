@@ -1,6 +1,6 @@
 [gd_scene load_steps=6 format=3 uid="uid://cprt1oc13scs8"]
 
-[ext_resource type="Script" uid="uid://clwul0hk24dnp" path="res://pet.gd" id="1_3bfmq"]
+[ext_resource type="Script" uid="uid://clwul0hk24dnp" path="res://jump-rope-level/pet.gd" id="1_3bfmq"]
 [ext_resource type="Texture2D" uid="uid://8nf70jntwxbw" path="res://assets/jump-rope/pet/bunny_neutral.png" id="1_apo03"]
 [ext_resource type="Texture2D" uid="uid://7ccypx417qt7" path="res://assets/jump-rope/pet/bunny_jump.png" id="2_3bfmq"]
 
