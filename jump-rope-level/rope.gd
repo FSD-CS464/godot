@@ -3,10 +3,12 @@ extends Area2D
 signal rope_looped
 signal rope_hit
 
-@export var min_speed_scale: float = 0.3
-@export var max_speed_scale: float = 1.2
+@export var min_speed_scale: float = 0.5
+@export var max_speed_scale: float = 1.5
+@export var z_index_in_front: int = 10
+@export var z_index_behind: int = -10
 
-var current_speed_scale: float = 0.4
+var current_speed_scale: float = 0.5
 var score_for_difficulty: int = 0
 
 var _animated_sprite: AnimatedSprite2D
@@ -50,6 +52,11 @@ func _on_frame_changed() -> void:
 	if _animated_sprite.animation == "swing":
 		var is_active_frame := _animated_sprite.frame == 4
 		_collision_polygon.disabled = not is_active_frame
+		# On frame index 5, render behind the pet; otherwise render in front
+		if _animated_sprite.frame == 5:
+			z_index = z_index_behind
+		else:
+			z_index = z_index_in_front
 	else:
 		_collision_polygon.disabled = true
 

@@ -68,9 +68,9 @@ func _position_relative_to_viewport() -> void:
 	var vp_size := get_viewport_rect().size
 	var center_x := vp_size.x * 0.5
 	# Y Axis sprite positions relative to viewport
-	var map_y := vp_size.y * 0.08
+	var map_y := vp_size.y * 0.05
 	var rope_y := vp_size.y * 0.20
-	var pet_y := vp_size.y * 0.58
+	var pet_y := vp_size.y * 0.55
 	if is_instance_valid(map):
 		map.position.x = center_x
 		map.position.y = map_y
