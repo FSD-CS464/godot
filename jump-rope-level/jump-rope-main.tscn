@@ -1,0 +1,23 @@
+[gd_scene load_steps=6 format=3 uid="uid://c414mvehf23un"]
+
+[ext_resource type="Script" uid="uid://nvmm5qegbav4" path="res://jump-rope-level/jump-rope-main.gd" id="1_oxota"]
+[ext_resource type="PackedScene" uid="uid://cprt1oc13scs8" path="res://jump-rope-level/player.tscn" id="2_kqjrt"]
+[ext_resource type="PackedScene" uid="uid://c7uwc3l01o2rq" path="res://jump-rope-level/map.tscn" id="3_wr586"]
+[ext_resource type="PackedScene" uid="uid://cbn4jc6yslev8" path="res://jump-rope-level/rope.tscn" id="4_7xee6"]
+[ext_resource type="PackedScene" uid="uid://ctjp5aiagru8r" path="res://jump-rope-level/hud.tscn" id="5_kqjrt"]
+
+[node name="jump-rope-main" type="Node2D"]
+script = ExtResource("1_oxota")
+metadata/_edit_group_ = true
+
+[node name="Pet" parent="." instance=ExtResource("2_kqjrt")]
+position = Vector2(568, 459)
+
+[node name="map" parent="." instance=ExtResource("3_wr586")]
+position = Vector2(566, 137)
+
+[node name="rope" parent="." instance=ExtResource("4_7xee6")]
+position = Vector2(560, 236)
+
+[node name="HUD" parent="." instance=ExtResource("5_kqjrt")]
+layer = 0

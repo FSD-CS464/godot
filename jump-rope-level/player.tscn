@@ -1,0 +1,40 @@
+[gd_scene load_steps=6 format=3 uid="uid://cprt1oc13scs8"]
+
+[ext_resource type="Script" uid="uid://clwul0hk24dnp" path="res://jump-rope-level/pet.gd" id="1_3bfmq"]
+[ext_resource type="Texture2D" uid="uid://8nf70jntwxbw" path="res://assets/jump-rope/pet/bunny_neutral.png" id="1_apo03"]
+[ext_resource type="Texture2D" uid="uid://7ccypx417qt7" path="res://assets/jump-rope/pet/bunny_jump.png" id="2_3bfmq"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_lx5cg"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_apo03")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_3bfmq")
+}],
+"loop": true,
+"name": &"jump",
+"speed": 5.0
+}]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_c2y01"]
+radius = 83.0
+height = 242.0
+
+[node name="Pet" type="CharacterBody2D"]
+script = ExtResource("1_3bfmq")
+metadata/_edit_group_ = true
+
+[node name="PetAnimatedSprite" type="AnimatedSprite2D" parent="."]
+scale = Vector2(0.2, 0.2)
+sprite_frames = SubResource("SpriteFrames_lx5cg")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(-15, 0)
+shape = SubResource("CapsuleShape2D_c2y01")
