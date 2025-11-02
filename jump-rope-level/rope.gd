@@ -33,7 +33,7 @@ func start_swing() -> void:
 
 func stop_swing() -> void:
 	_animated_sprite.play("default")
-	_collision_polygon.disabled = true
+	_collision_polygon.set_deferred("disabled", true)
 
 func set_score_for_difficulty(new_score: int) -> void:
 	score_for_difficulty = new_score
@@ -51,14 +51,14 @@ func _on_frame_changed() -> void:
 	# Enable hitbox only on frame index 3 for the swing animation
 	if _animated_sprite.animation == "swing":
 		var is_active_frame := _animated_sprite.frame == 4
-		_collision_polygon.disabled = not is_active_frame
+		_collision_polygon.set_deferred("disabled", not is_active_frame)
 		# On frame index 5, render behind the pet; otherwise render in front
 		if _animated_sprite.frame == 5:
 			z_index = z_index_behind
 		else:
 			z_index = z_index_in_front
 	else:
-		_collision_polygon.disabled = true
+		_collision_polygon.set_deferred("disabled", true)
 
 func _on_body_entered(_body: Node) -> void:
 	# Only valid hit during the active frame; collision is disabled otherwise
