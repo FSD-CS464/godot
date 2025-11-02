@@ -24,3 +24,6 @@ temp/
 # OS and editor specific files
 .DS_Store
 Thumbs.db
+
+#godot export files
+godot_export/

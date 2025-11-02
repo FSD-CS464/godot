@@ -1,0 +1,60 @@
+<!--
+	💡 INSTRUCTIONS: Add this JavaScript code to your Godot HTML5 export template
+	
+	When exporting your Godot game as HTML5:
+	1. In Godot Editor: Project → Export → Add preset → Web
+	2. After exporting, locate the HTML file (typically in the export directory)
+	3. Open the HTML file and find the <script> tag section
+	4. Add the JavaScript code below BEFORE the closing </script> tag or in a separate <script> tag
+	
+	Alternatively, you can modify the export template directly:
+	- Locate your Godot export templates directory (usually in AppData/Godot/export_templates/)
+	- Find the web template HTML file
+	- Add this JavaScript to that template for all future exports
+-->
+
+<script>
+	// 💡 List of allowed origins for the parent Next.js app (the sender)
+	const ALLOWED_PARENT_ORIGINS = [
+		'http://localhost:3000',
+		'http://127.0.0.1:3000',
+		'https://your-nextjs-app.com'  // 💡 UPDATE THIS: Your production Next.js origin
+	];
+
+	// Store UID if message arrives before GDScript is ready to poll
+	let pendingUID = null;
+
+	// Function for GDScript to call to get the pending UID
+	window.getPendingUID = function() {
+		if (pendingUID !== null) {
+			let uid = pendingUID;
+			pendingUID = null; // Clear after sending
+			return uid;
+		}
+		return null;
+	}
+
+	// Listen for postMessage from parent window
+	window.addEventListener('message', (event) => {
+		// Security check
+		if (!ALLOWED_PARENT_ORIGINS.includes(event.origin)) {
+			console.warn('[JS] Rejected message from untrusted origin:', event.origin);
+			return;
+		}
+
+		const data = event.data;
+		if (data && data.type === 'AUTH_INIT' && data.uid) {
+			pendingUID = data.uid;
+		}
+	}, false);
+</script>
+
+<!--
+	IMPORTANT NOTES:
+	- Update ALLOWED_PARENT_ORIGINS array with your production Next.js origin
+	- This uses a PULL-based approach: GDScript polls JavaScript for the UID
+	- JavaScript simply stores the UID when received via postMessage
+	- GDScript uses a Timer to periodically check window.getPendingUID()
+	- This avoids all timing issues since GDScript runs in a stable game loop
+	- No complex callbacks or interfaces needed - much more reliable!
+-->
