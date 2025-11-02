@@ -34,6 +34,11 @@ func _ready() -> void:
 	# Update high score displays
 	_update_high_scores()
 	
+	# Check if we already have a UID from persistent storage
+	if UserData.has_user_id():
+		set_user_id(UserData.get_user_id())
+		return
+	
 	# Setup JavaScript bridge for HTML5 export
 	await get_tree().process_frame
 	
@@ -72,9 +77,10 @@ func _on_mine_race_pressed() -> void:
 	pass
 
 func _update_auth_status() -> void:
-	if current_user_id != "":
+	var uid = UserData.get_user_id()
+	if not uid.is_empty():
 		# Authentication successful - show green status and UID
-		_auth_status_label.text = "Auth: OK | UID: " + current_user_id
+		_auth_status_label.text = "Auth: OK | UID: " + uid
 		_auth_status_label.modulate = Color(0.2, 1.0, 0.2)  # Green color
 	else:
 		# Not authenticated yet
@@ -83,14 +89,24 @@ func _update_auth_status() -> void:
 
 # Poll JavaScript for pending UID
 func _check_for_pending_uid() -> void:
-	if not current_user_id.is_empty():
-		return  # Already have UID, stop polling
+	# Ensure this node is in the tree before proceeding (prevents mobile Chrome timing issues)
+	if not is_inside_tree():
+		return
+	
+	# Check persistent storage first
+	if UserData.has_user_id():
+		if _uid_poll_timer and is_instance_valid(_uid_poll_timer):
+			_uid_poll_timer.stop()
+			_uid_poll_timer.queue_free()
+			_uid_poll_timer = null
+		set_user_id(UserData.get_user_id())
+		return
 	
 	_poll_attempts += 1
 	
 	# Stop polling after 10 seconds (20 attempts * 0.5s)
 	if _poll_attempts > MAX_POLL_ATTEMPTS:
-		if _uid_poll_timer:
+		if _uid_poll_timer and is_instance_valid(_uid_poll_timer):
 			_uid_poll_timer.stop()
 			_uid_poll_timer.queue_free()
 			_uid_poll_timer = null
@@ -111,7 +127,7 @@ func _check_for_pending_uid() -> void:
 	# Validate and process UID
 	if not uid.is_empty() and uid != "null" and uid != "undefined":
 		# Stop timer
-		if _uid_poll_timer:
+		if _uid_poll_timer and is_instance_valid(_uid_poll_timer):
 			_uid_poll_timer.stop()
 			_uid_poll_timer.queue_free()
 			_uid_poll_timer = null
@@ -121,12 +137,13 @@ func _check_for_pending_uid() -> void:
 
 # Function to receive the UID from the JavaScript layer
 func set_user_id(uid: String) -> void:
-	current_user_id = uid
+	# Store in persistent autoload
+	UserData.set_user_id(uid)
 	_update_auth_status()
 	_initialize_user_data()
 
 func _initialize_user_data() -> void:
-	if current_user_id.is_empty():
+	if not UserData.has_user_id():
 		return
 	
 	# TODO: Implement HTTP request to fetch user-specific game data
