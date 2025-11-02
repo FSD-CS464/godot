@@ -36,7 +36,11 @@ func _ready() -> void:
 	
 	# Check if we already have a UID from persistent storage
 	if UserData.has_user_id():
-		set_user_id(UserData.get_user_id())
+		# If we have a stored token, validate it; otherwise just set UID
+		if UserData.has_jwt_token():
+			set_user_id(UserData.get_user_id(), UserData.get_jwt_token())
+		else:
+			set_user_id(UserData.get_user_id())
 		return
 	
 	# Setup JavaScript bridge for HTML5 export
@@ -99,7 +103,11 @@ func _check_for_pending_uid() -> void:
 			_uid_poll_timer.stop()
 			_uid_poll_timer.queue_free()
 			_uid_poll_timer = null
-		set_user_id(UserData.get_user_id())
+		# If we have a stored token, validate it; otherwise just set UID
+		if UserData.has_jwt_token():
+			set_user_id(UserData.get_user_id(), UserData.get_jwt_token())
+		else:
+			set_user_id(UserData.get_user_id())
 		return
 	
 	_poll_attempts += 1
@@ -113,18 +121,28 @@ func _check_for_pending_uid() -> void:
 		print("Timeout: Failed to receive UID after 10 seconds")
 		return
 	
-	# Call JavaScript function to get pending UID
-	var js_code = "window.getPendingUID ? window.getPendingUID() : null;"
-	var result = JavaScriptBridge.eval(js_code, true)
+	# Call JavaScript function to get pending UID and token
+	var js_code_uid = "window.getPendingUID ? window.getPendingUID() : null;"
+	var result_uid = JavaScriptBridge.eval(js_code_uid, true)
+	
+	var js_code_token = "window.getPendingToken ? window.getPendingToken() : null;"
+	var result_token = JavaScriptBridge.eval(js_code_token, true)
 	
 	# Extract UID from result
 	var uid = ""
-	if result is String:
-		uid = result.strip_edges()
-	elif result != null:
-		uid = str(result).strip_edges()
+	if result_uid is String:
+		uid = result_uid.strip_edges()
+	elif result_uid != null:
+		uid = str(result_uid).strip_edges()
 	
-	# Validate and process UID
+	# Extract JWT token from result
+	var token = ""
+	if result_token is String:
+		token = result_token.strip_edges()
+	elif result_token != null:
+		token = str(result_token).strip_edges()
+	
+	# Validate and process UID and token
 	if not uid.is_empty() and uid != "null" and uid != "undefined":
 		# Stop timer
 		if _uid_poll_timer and is_instance_valid(_uid_poll_timer):
@@ -132,13 +150,15 @@ func _check_for_pending_uid() -> void:
 			_uid_poll_timer.queue_free()
 			_uid_poll_timer = null
 		
-		# Process UID
-		set_user_id(uid)
+		# Process UID and token
+		set_user_id(uid, token)
 
-# Function to receive the UID from the JavaScript layer
-func set_user_id(uid: String) -> void:
+# Function to receive the UID and JWT token from the JavaScript layer
+func set_user_id(uid: String, token: String = "") -> void:
 	# Store in persistent autoload
 	UserData.set_user_id(uid)
+	if not token.is_empty():
+		UserData.set_jwt_token(token)
 	_update_auth_status()
 	_initialize_user_data()
 
@@ -152,6 +172,78 @@ func _initialize_user_data() -> void:
 	_fetch_user_data_from_golang_api()
 
 func _fetch_user_data_from_golang_api() -> void:
-	# Placeholder for future HTTP request implementation
-	# Use HTTPRequest node or HTTPClient to fetch user data
-	pass
+	if not UserData.has_jwt_token():
+		print("No JWT token available for API request")
+		_update_auth_status_with_error("No token")
+		return
+	
+	# Create HTTPRequest node to make authenticated request
+	var http_request = HTTPRequest.new()
+	add_child(http_request)
+	http_request.request_completed.connect(_on_api_request_completed.bind(http_request))
+	
+	# Get backend API URL - To update for production
+	var api_base_url = "http://localhost:8080"
+	var api_endpoint = api_base_url + "/api/v1/game/data"
+	
+	# Prepare headers with JWT token
+	var headers = PackedStringArray([
+		"Authorization: Bearer " + UserData.get_jwt_token(),
+		"Content-Type: application/json"
+	])
+	
+	# Make GET request
+	var error = http_request.request(api_endpoint, headers, HTTPClient.METHOD_GET)
+	if error != OK:
+		print("Failed to create HTTP request: ", error)
+		_update_auth_status_with_error("Request failed")
+		http_request.queue_free()
+
+func _on_api_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray, http_request: HTTPRequest) -> void:
+	# Clean up the HTTPRequest node
+	if is_instance_valid(http_request):
+		http_request.queue_free()
+	
+	# Check if request was successful
+	if result != HTTPRequest.RESULT_SUCCESS:
+		print("HTTP request failed with result: ", result)
+		_update_auth_status_with_error("Network error")
+		return
+	
+	# Validate JWT by checking response code
+	if response_code == 200:
+		# JWT is valid - parse response
+		var json = JSON.new()
+		var parse_error = json.parse(body.get_string_from_utf8())
+		if parse_error == OK:
+			var response_data = json.data
+			print("Successfully validated JWT and retrieved user data")
+			# User data is valid - authentication confirmed
+			_update_auth_status_validated()
+		else:
+			print("Failed to parse response JSON")
+			_update_auth_status_with_error("Invalid response")
+	elif response_code == 401:
+		# JWT is invalid or expired
+		print("JWT validation failed: Unauthorized")
+		_update_auth_status_with_error("Auth failed")
+		# Clear invalid token
+		UserData.set_jwt_token("")
+	else:
+		print("Unexpected response code: ", response_code)
+		_update_auth_status_with_error("Server error")
+
+func _update_auth_status_validated() -> void:
+	var uid = UserData.get_user_id()
+	if not uid.is_empty():
+		_auth_status_label.text = "Auth: OK | UID: " + uid
+		_auth_status_label.modulate = Color(0.2, 1.0, 0.2)  # Green color
+
+func _update_auth_status_with_error(error_msg: String) -> void:
+	var uid = UserData.get_user_id()
+	if not uid.is_empty():
+		_auth_status_label.text = "Auth: " + error_msg + " | UID: " + uid
+		_auth_status_label.modulate = Color(1.0, 0.5, 0.2)  # Orange/red color
+	else:
+		_auth_status_label.text = "Auth: " + error_msg
+		_auth_status_label.modulate = Color(1.0, 0.2, 0.2)  # Red color

@@ -21,8 +21,9 @@
 		'https://your-nextjs-app.com'  // 💡 UPDATE THIS: Your production Next.js origin
 	];
 
-	// Store UID if message arrives before GDScript is ready to poll
+	// Store UID and JWT token if message arrives before GDScript is ready to poll
 	let pendingUID = null;
+	let pendingToken = null;
 
 	// Function for GDScript to call to get the pending UID
 	window.getPendingUID = function() {
@@ -30,6 +31,16 @@
 			let uid = pendingUID;
 			pendingUID = null; // Clear after sending
 			return uid;
+		}
+		return null;
+	}
+
+	// Function for GDScript to call to get the pending JWT token
+	window.getPendingToken = function() {
+		if (pendingToken !== null) {
+			let token = pendingToken;
+			pendingToken = null; // Clear after sending
+			return token;
 		}
 		return null;
 	}
@@ -45,6 +56,9 @@
 		const data = event.data;
 		if (data && data.type === 'AUTH_INIT' && data.uid) {
 			pendingUID = data.uid;
+			if (data.access_token) {
+				pendingToken = data.access_token;
+			}
 		}
 	}, false);
 </script>
