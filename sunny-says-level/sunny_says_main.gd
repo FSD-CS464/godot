@@ -202,16 +202,11 @@ func _on_websocket_message(message: Dictionary) -> void:
 			var sunny_frame = message.get("sunny_frame", 0)
 			var display_duration_ms = message.get("display_duration_ms", 0)
 			
-			# Debug: Print received message
-			print("Received SUNNY_FRAME: frame=", sunny_frame, " duration_ms=", display_duration_ms)
-			
 			# Add to queue for duration-based processing
 			sunny_frame_queue.append({
 				"frame": sunny_frame,
 				"duration_ms": display_duration_ms
 			})
-			
-			print("Queue size: ", sunny_frame_queue.size(), " is_processing: ", is_processing_sunny_queue)
 			
 			# Start processing queue if not already processing
 			if not is_processing_sunny_queue:
@@ -234,14 +229,9 @@ func _on_websocket_message(message: Dictionary) -> void:
 			# Only send if player hasn't game over and game is still active
 			if game_started and pet and pet.input_enabled:
 				if websocket_client and websocket_client.is_connected:
-					print("Sending ready message after round result (score: ", score, ")")
 					websocket_client.send_message({
 						"type": MSG_TYPE_READY
 					})
-				else:
-					print("ERROR: Cannot send ready - websocket not connected")
-			else:
-				print("ERROR: Cannot send ready - game_started=", game_started, " pet=", pet, " input_enabled=", pet.input_enabled if pet else "N/A")
 		
 		MSG_TYPE_GAME_OVER:
 			# Player game over
@@ -252,7 +242,6 @@ func _on_websocket_message(message: Dictionary) -> void:
 		MSG_TYPE_OPPONENT_GAME_OVER:
 			# Opponent game over - they disconnected or game overed
 			# Player should continue playing solo
-			print("Opponent game over - continuing to play solo")
 			opponent_game_over = true
 			if opponent_pet:
 				opponent_pet.modulate.a = 0.5  # 50% opacity
@@ -264,14 +253,9 @@ func _on_websocket_message(message: Dictionary) -> void:
 			# Send ready to trigger next round (server will mark round inactive if needed)
 			if game_started and pet and pet.input_enabled:
 				if websocket_client and websocket_client.is_connected:
-					print("Sending ready message after opponent game over")
 					websocket_client.send_message({
 						"type": MSG_TYPE_READY
 					})
-				else:
-					print("ERROR: Cannot send ready after opponent game over - websocket not connected")
-			else:
-				print("Not sending ready after opponent game over - game_started=", game_started, " input_enabled=", pet.input_enabled if pet else "N/A")
 		
 		MSG_TYPE_ERROR:
 			var error_msg = message.get("message", "")
@@ -513,15 +497,12 @@ func _on_player_frame_changed(new_frame: int) -> void:
 func _process_sunny_frame_queue() -> void:
 	# Process the queue of Sunny frames with proper timing
 	if is_processing_sunny_queue:
-		print("Already processing queue, skipping")
 		return
 	
 	if sunny_frame_queue.is_empty():
-		print("Queue is empty, nothing to process")
 		return
 	
 	is_processing_sunny_queue = true
-	print("Starting queue processing, queue size: ", sunny_frame_queue.size())
 	
 	# Process frames one at a time with proper timing
 	_process_next_sunny_frame()
@@ -529,7 +510,6 @@ func _process_sunny_frame_queue() -> void:
 func _process_next_sunny_frame() -> void:
 	# Check if queue is empty
 	if sunny_frame_queue.is_empty():
-		print("Queue processing complete")
 		is_processing_sunny_queue = false
 		return
 	
@@ -538,23 +518,18 @@ func _process_next_sunny_frame() -> void:
 	var frame = frame_data.get("frame", 0)
 	var duration_ms = frame_data.get("duration_ms", 0)
 	
-	print("Processing frame: ", frame, " with duration: ", duration_ms, "ms, remaining in queue: ", sunny_frame_queue.size())
-	
 	# Set the frame immediately
 	if sunny:
 		sunny.set_frame(frame)
 	
 	# If this is the final frame (no duration), mark round as active and stop processing
 	if duration_ms <= 0:
-		print("Final frame (no duration), marking round active")
 		current_round_active = true
 		is_processing_sunny_queue = false
 		return
 	
 	# Wait for the specified duration before processing next frame
-	print("Waiting ", duration_ms, "ms before next frame...")
 	await get_tree().create_timer(duration_ms / 1000.0).timeout
-	print("Wait complete, processing next frame")
 	
 	# Process next frame recursively
 	_process_next_sunny_frame()
