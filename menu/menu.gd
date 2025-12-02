@@ -31,7 +31,7 @@ func _ready() -> void:
 	# Initialize auth status label
 	_update_auth_status()
 	
-	# Update high score displays
+	# Update high score displays (will be updated from API if authenticated)
 	_update_high_scores()
 	
 	# Check if we already have a UID from persistent storage
@@ -171,44 +171,19 @@ func _initialize_user_data() -> void:
 	if not UserData.has_user_id():
 		return
 	
-	# TODO: Implement HTTP request to fetch user-specific game data
-	# The browser will automatically send the JWT cookie with requests
-	# Example API endpoint: http://localhost:8080/api/v1/game/data
-	_fetch_user_data_from_golang_api()
+	# Fetch user-specific game data (high scores)
+	_fetch_high_scores_from_api()
 
-func _fetch_user_data_from_golang_api() -> void:
+func _fetch_high_scores_from_api() -> void:
 	if not UserData.has_jwt_token():
 		print("No JWT token available for API request")
 		_update_auth_status_with_error("No token")
 		return
 	
-	# Create HTTPRequest node to make authenticated request
-	var http_request = HTTPRequest.new()
-	add_child(http_request)
-	http_request.request_completed.connect(_on_api_request_completed.bind(http_request))
-	
-	# Get backend API URL - To update for production
-	var api_base_url = "http://localhost:8080"
-	var api_endpoint = api_base_url + "/api/v1/game/data"
-	
-	# Prepare headers with JWT token
-	var headers = PackedStringArray([
-		"Authorization: Bearer " + UserData.get_jwt_token(),
-		"Content-Type: application/json"
-	])
-	
-	# Make GET request
-	var error = http_request.request(api_endpoint, headers, HTTPClient.METHOD_GET)
-	if error != OK:
-		print("Failed to create HTTP request: ", error)
-		_update_auth_status_with_error("Request failed")
-		http_request.queue_free()
+	# Use UserData API helper to fetch high scores
+	UserData.api_get("/api/v1/game/data", _on_high_scores_fetched)
 
-func _on_api_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray, http_request: HTTPRequest) -> void:
-	# Clean up the HTTPRequest node
-	if is_instance_valid(http_request):
-		http_request.queue_free()
-	
+func _on_high_scores_fetched(result: int, response_code: int, response_data) -> void:
 	# Check if request was successful
 	if result != HTTPRequest.RESULT_SUCCESS:
 		print("HTTP request failed with result: ", result)
@@ -242,8 +217,11 @@ func _on_api_request_completed(result: int, response_code: int, headers: PackedS
 			# User data is valid - authentication confirmed
 			_update_auth_status_validated()
 		else:
-			print("Failed to parse response JSON")
-			_update_auth_status_with_error("Invalid response")
+			# No high scores yet, keep defaults
+			print("No high scores found, using defaults")
+		
+		# Authentication confirmed
+		_update_auth_status_validated()
 	elif response_code == 401:
 		# JWT is invalid or expired
 		print("JWT validation failed: Unauthorized")
