@@ -82,7 +82,6 @@ func _ready() -> void:
 
 func _try_connect_multiplayer() -> void:
 	if not UserData.has_user_id() or not UserData.has_jwt_token():
-		print("No user authentication, starting singleplayer")
 		await _run_countdown()
 		_start_singleplayer_game()
 		return
@@ -107,17 +106,14 @@ func _try_connect_multiplayer() -> void:
 	# Wait for connection or timeout
 	await get_tree().create_timer(5.0).timeout
 	if not websocket_client.is_connected:
-		print("WebSocket connection timeout, starting singleplayer")
 		if hud:
 			hud.show_searching(false)
 		_start_singleplayer_game()
 
 func _on_websocket_connected() -> void:
-	print("WebSocket connected")
 	is_waiting_for_opponent = true
 
 func _on_websocket_disconnected() -> void:
-	print("WebSocket disconnected")
 	if game_mode == GameMode.MULTIPLAYER and game_started:
 		# Only game over if we haven't already received opponent game over
 		# If opponent game over was received, we should continue playing solo
@@ -127,7 +123,6 @@ func _on_websocket_disconnected() -> void:
 		# If opponent_game_over is true, the opponent disconnected but we continue playing
 
 func _on_websocket_error(error: String) -> void:
-	print("WebSocket error: ", error)
 	if hud:
 		hud.show_searching(false)
 	if not game_started:
@@ -138,7 +133,7 @@ func _on_websocket_message(message: Dictionary) -> void:
 	
 	match msg_type:
 		MSG_TYPE_ROOM_JOINED:
-			print("Room joined: ", message.get("room_id", ""))
+			pass
 		
 		MSG_TYPE_WAITING:
 			# Only handle waiting messages if game hasn't started
@@ -536,47 +531,16 @@ func _process_next_sunny_frame() -> void:
 
 func _save_high_score(final_score: int) -> void:
 	if not UserData.has_user_id() or not UserData.has_jwt_token():
-		print("Cannot save high score: User not authenticated")
 		return
 	
-	var http_request = HTTPRequest.new()
-	add_child(http_request)
-	http_request.request_completed.connect(_on_save_high_score_completed.bind(http_request))
-	
-	var api_base_url = "http://localhost:8080"
-	var api_endpoint = api_base_url + "/api/v1/game/save"
-	
-	var json = JSON.new()
+	# Use UserData API helper to save high score
 	var data = {
 		"game_type": "Sunny Says",
 		"score": final_score
 	}
-	var json_string = json.stringify(data)
 	
-	var headers = PackedStringArray([
-		"Authorization: Bearer " + UserData.get_jwt_token(),
-		"Content-Type: application/json"
-	])
-	
-	var error = http_request.request(api_endpoint, headers, HTTPClient.METHOD_POST, json_string)
-	if error != OK:
-		print("Failed to create HTTP request: ", error)
-		http_request.queue_free()
+	UserData.api_post("/api/v1/game/save", data, _on_save_high_score_completed)
 
-func _on_save_high_score_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray, http_request: HTTPRequest) -> void:
-	if is_instance_valid(http_request):
-		http_request.queue_free()
-	
-	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
-		var json = JSON.new()
-		var parse_error = json.parse(body.get_string_from_utf8())
-		if parse_error == OK:
-			var response_data = json.data
-			if response_data != null and response_data.has("high_score"):
-				print("High score saved successfully: ", response_data["high_score"])
-			else:
-				print("High score saved successfully")
-		else:
-			print("Failed to parse response JSON")
-	else:
-		print("Failed to save high score. Response code: ", response_code)
+func _on_save_high_score_completed(result: int, response_code: int, response_data) -> void:
+	if result != HTTPRequest.RESULT_SUCCESS or response_code != 200:
+		pass  # Silent failure

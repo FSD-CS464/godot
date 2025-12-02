@@ -18,8 +18,6 @@ func connect_to_server(server_url: String, token: String) -> void:
 	if err != OK:
 		error_occurred.emit("Failed to connect: " + str(err))
 		return
-	
-	print("Connecting to WebSocket: ", url)
 
 func disconnect_from_server() -> void:
 	if websocket:
@@ -29,14 +27,11 @@ func disconnect_from_server() -> void:
 
 func send_message(message: Dictionary) -> void:
 	if not is_connected or not websocket:
-		print("Cannot send message: not connected")
 		return
 	
 	var json = JSON.new()
 	var json_string = json.stringify(message)
-	var error = websocket.send_text(json_string)
-	if error != OK:
-		print("Failed to send message: ", error)
+	websocket.send_text(json_string)
 
 func _process(_delta: float) -> void:
 	if not websocket:
@@ -61,8 +56,6 @@ func _process(_delta: float) -> void:
 			if parse_error == OK:
 				var message = json.data
 				message_received.emit(message)
-			else:
-				print("Failed to parse WebSocket message: ", message_text)
 	
 	elif state == WebSocketPeer.STATE_CLOSED:
 		if is_connected:

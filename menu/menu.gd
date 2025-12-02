@@ -2,13 +2,12 @@ extends CanvasLayer
 
 var _jump_rope_button: Button
 var _sunny_says_button: Button
-var _mine_race_button: Button
 var _auth_status_label: Label
+var _energy_label: Label
 
 var high_scores: Dictionary = {
 	"Jump Rope": 0,
-	"Sunny Says": 0,
-	"Mine Race": 0
+	"Sunny Says": 0
 }
 
 # User authentication
@@ -17,22 +16,29 @@ var _uid_poll_timer: Timer = null
 var _poll_attempts: int = 0
 const MAX_POLL_ATTEMPTS: int = 20  # 10 seconds (20 * 0.5s)
 
+# Energy tracking
+var current_energy: int = 30
+const JUMP_ROPE_ENERGY_COST: int = 10
+const SUNNY_SAYS_ENERGY_COST: int = 15
+
 func _ready() -> void:
 	_jump_rope_button = $Root/MainContainer/ButtonsContainer/JumpRopeButton
 	_sunny_says_button = $Root/MainContainer/ButtonsContainer/SunnySaysButton
-	_mine_race_button = $Root/MainContainer/ButtonsContainer/MineRaceButton
 	_auth_status_label = $Root/AuthStatusLabel
+	_energy_label = $Root/EnergyLabel
 	
 	# Connect button signals
 	_jump_rope_button.pressed.connect(_on_jump_rope_pressed)
 	_sunny_says_button.pressed.connect(_on_sunny_says_pressed)
-	_mine_race_button.pressed.connect(_on_mine_race_pressed)
 	
 	# Initialize auth status label
 	_update_auth_status()
 	
 	# Update high score displays (will be updated from API if authenticated)
 	_update_high_scores()
+	
+	# Initialize energy display
+	_update_energy_display()
 	
 	# Check if we already have a UID from persistent storage
 	if UserData.has_user_id():
@@ -54,36 +60,35 @@ func _ready() -> void:
 	
 	if _uid_poll_timer.timeout.connect(_check_for_pending_uid) == OK:
 		_uid_poll_timer.start()
-	else:
-		print("ERROR: Failed to connect timer timeout signal")
 	
 	# Try polling once immediately
 	_check_for_pending_uid()
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_ENTER_TREE:
-		# Refresh high scores when entering the menu scene (e.g., returning from a game)
+		# Refresh high scores and energy when entering the menu scene (e.g., returning from a game)
 		if UserData.has_user_id() and UserData.has_jwt_token():
 			_fetch_high_scores_from_api()
+			_fetch_energy_from_api()
 
 func _update_high_scores() -> void:
 	var jump_rope_score = $Root/MainContainer/HighScoresContainer/JumpRopeScoreContainer/JumpRopeScore
 	var sunny_says_score = $Root/MainContainer/HighScoresContainer/SunnySaysScoreContainer/SunnySaysScore
-	var mine_race_score = $Root/MainContainer/HighScoresContainer/MineRaceScoreContainer/MineRaceScore
 	
 	jump_rope_score.text = str(high_scores["Jump Rope"])
 	sunny_says_score.text = str(high_scores["Sunny Says"])
-	mine_race_score.text = str(high_scores["Mine Race"])
 
 func _on_jump_rope_pressed() -> void:
+	# Check and deduct energy before starting game
+	if not _check_and_deduct_energy("Jump Rope", JUMP_ROPE_ENERGY_COST):
+		return
 	get_tree().change_scene_to_file("res://jump-rope-level/jump-rope-main.tscn")
 
 func _on_sunny_says_pressed() -> void:
+	# Check and deduct energy before starting game
+	if not _check_and_deduct_energy("Sunny Says", SUNNY_SAYS_ENERGY_COST):
+		return
 	get_tree().change_scene_to_file("res://sunny-says-level/sunny_says_main.tscn")
-
-func _on_mine_race_pressed() -> void:
-	# TODO: Implement when Mine Race is created
-	pass
 
 func _update_auth_status() -> void:
 	var uid = UserData.get_user_id()
@@ -123,7 +128,6 @@ func _check_for_pending_uid() -> void:
 			_uid_poll_timer.stop()
 			_uid_poll_timer.queue_free()
 			_uid_poll_timer = null
-		print("Timeout: Failed to receive UID after 10 seconds")
 		return
 	
 	# Call JavaScript function to get pending UID and token
@@ -171,12 +175,12 @@ func _initialize_user_data() -> void:
 	if not UserData.has_user_id():
 		return
 	
-	# Fetch user-specific game data (high scores)
+	# Fetch user-specific game data (high scores and energy)
 	_fetch_high_scores_from_api()
+	_fetch_energy_from_api()
 
 func _fetch_high_scores_from_api() -> void:
 	if not UserData.has_jwt_token():
-		print("No JWT token available for API request")
 		_update_auth_status_with_error("No token")
 		return
 	
@@ -186,14 +190,12 @@ func _fetch_high_scores_from_api() -> void:
 func _on_high_scores_fetched(result: int, response_code: int, response_data) -> void:
 	# Check if request was successful
 	if result != HTTPRequest.RESULT_SUCCESS:
-		print("HTTP request failed with result: ", result)
 		_update_auth_status_with_error("Network error")
 		return
 	
 	# Validate JWT by checking response code
 	if response_code == 200:
 		# JWT is valid - response_data is already parsed by UserData.api_get
-		print("Successfully validated JWT and retrieved user data")
 		
 		# Parse and update high scores from response
 		if response_data != null and response_data.has("high_scores"):
@@ -203,26 +205,24 @@ func _on_high_scores_fetched(result: int, response_code: int, response_data) -> 
 				high_scores["Jump Rope"] = int(high_scores_dict["Jump Rope"])
 			if high_scores_dict.has("Sunny Says"):
 				high_scores["Sunny Says"] = int(high_scores_dict["Sunny Says"])
-			if high_scores_dict.has("Mine Race"):
-				high_scores["Mine Race"] = int(high_scores_dict["Mine Race"])
 			
 			# Update UI with fetched high scores
 			_update_high_scores()
-			print("High scores updated: ", high_scores)
-		else:
-			# No high scores yet, keep defaults
-			print("No high scores found, using defaults")
+		
+		# Parse and update energy from response
+		if response_data != null and response_data.has("energy"):
+			current_energy = int(response_data["energy"])
+			_update_energy_display()
+			_update_button_states()
 		
 		# User data is valid - authentication confirmed
 		_update_auth_status_validated()
 	elif response_code == 401:
 		# JWT is invalid or expired
-		print("JWT validation failed: Unauthorized")
 		_update_auth_status_with_error("Auth failed")
 		# Clear invalid token
 		UserData.set_jwt_token("")
 	else:
-		print("Unexpected response code: ", response_code)
 		_update_auth_status_with_error("Server error")
 
 func _update_auth_status_validated() -> void:
@@ -239,3 +239,71 @@ func _update_auth_status_with_error(error_msg: String) -> void:
 	else:
 		_auth_status_label.text = "Auth: " + error_msg
 		_auth_status_label.modulate = Color(1.0, 0.2, 0.2)  # Red color
+
+func _fetch_energy_from_api() -> void:
+	if not UserData.has_jwt_token():
+		return
+	
+	# Use UserData API helper to fetch energy
+	UserData.api_get("/api/v1/users/me/energy", _on_energy_fetched)
+
+func _on_energy_fetched(result: int, response_code: int, response_data) -> void:
+	if result != HTTPRequest.RESULT_SUCCESS:
+		return
+	
+	if response_code == 200 and response_data != null and response_data.has("energy"):
+		current_energy = int(response_data["energy"])
+		_update_energy_display()
+		_update_button_states()
+
+func _update_energy_display() -> void:
+	if _energy_label:
+		_energy_label.text = "Energy: " + str(current_energy)
+
+func _update_button_states() -> void:
+	# Disable buttons if insufficient energy
+	if _jump_rope_button:
+		_jump_rope_button.disabled = current_energy < JUMP_ROPE_ENERGY_COST
+		if current_energy < JUMP_ROPE_ENERGY_COST:
+			_jump_rope_button.modulate = Color(0.5, 0.5, 0.5)  # Darken button
+		else:
+			_jump_rope_button.modulate = Color(1.0, 1.0, 1.0)  # Normal color
+	
+	if _sunny_says_button:
+		_sunny_says_button.disabled = current_energy < SUNNY_SAYS_ENERGY_COST
+		if current_energy < SUNNY_SAYS_ENERGY_COST:
+			_sunny_says_button.modulate = Color(0.5, 0.5, 0.5)  # Darken button
+		else:
+			_sunny_says_button.modulate = Color(1.0, 1.0, 1.0)  # Normal color
+
+func _check_and_deduct_energy(game_type: String, energy_cost: int) -> bool:
+	# Check if user has enough energy
+	if current_energy < energy_cost:
+		return false
+	
+	# Deduct energy via API
+	if not UserData.has_jwt_token():
+		return false
+	
+	var data = {
+		"game_type": game_type
+	}
+	
+	UserData.api_post("/api/v1/game/deduct-energy", data, _on_energy_deducted)
+	
+	# Optimistically update local energy
+	current_energy -= energy_cost
+	_update_energy_display()
+	_update_button_states()
+	
+	return true
+
+func _on_energy_deducted(result: int, response_code: int, response_data) -> void:
+	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
+		if response_data != null and response_data.has("new_energy"):
+			current_energy = int(response_data["new_energy"])
+			_update_energy_display()
+			_update_button_states()
+	else:
+		# Revert optimistic update if deduction failed
+		_fetch_energy_from_api()
