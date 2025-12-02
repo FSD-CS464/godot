@@ -73,8 +73,7 @@ func _on_jump_rope_pressed() -> void:
 	get_tree().change_scene_to_file("res://jump-rope-level/jump-rope-main.tscn")
 
 func _on_sunny_says_pressed() -> void:
-	# TODO: Implement when Sunny Says is created
-	pass
+	get_tree().change_scene_to_file("res://sunny-says-level/sunny_says_main.tscn")
 
 func _on_mine_race_pressed() -> void:
 	# TODO: Implement when Mine Race is created
