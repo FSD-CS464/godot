@@ -62,9 +62,9 @@ func _ready() -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_ENTER_TREE:
-		# Refresh high scores when entering the menu scene
+		# Refresh high scores when entering the menu scene (e.g., returning from a game)
 		if UserData.has_user_id() and UserData.has_jwt_token():
-			_fetch_high_scores_from_api()
+			_fetch_user_data_from_golang_api()
 
 func _update_high_scores() -> void:
 	var jump_rope_score = $Root/MainContainer/HighScoresContainer/JumpRopeScoreContainer/JumpRopeScore
@@ -79,8 +79,7 @@ func _on_jump_rope_pressed() -> void:
 	get_tree().change_scene_to_file("res://jump-rope-level/jump-rope-main.tscn")
 
 func _on_sunny_says_pressed() -> void:
-	# TODO: Implement when Sunny Says is created
-	pass
+	get_tree().change_scene_to_file("res://sunny-says-level/sunny_says_main.tscn")
 
 func _on_mine_race_pressed() -> void:
 	# TODO: Implement when Mine Race is created
@@ -193,20 +192,30 @@ func _on_high_scores_fetched(result: int, response_code: int, response_data) -> 
 	
 	# Validate JWT by checking response code
 	if response_code == 200:
-		# JWT is valid - parse high scores
-		if response_data != null and response_data.has("high_scores"):
-			var high_scores_dict = response_data["high_scores"]
-			# Update high scores dictionary
-			if high_scores_dict.has("Jump Rope"):
-				high_scores["Jump Rope"] = int(high_scores_dict["Jump Rope"])
-			if high_scores_dict.has("Sunny Says"):
-				high_scores["Sunny Says"] = int(high_scores_dict["Sunny Says"])
-			if high_scores_dict.has("Mine Race"):
-				high_scores["Mine Race"] = int(high_scores_dict["Mine Race"])
+		# JWT is valid - parse response
+		var json = JSON.new()
+		var parse_error = json.parse(body.get_string_from_utf8())
+		if parse_error == OK:
+			var response_data = json.data
+			print("Successfully validated JWT and retrieved user data")
 			
-			# Update UI with fetched high scores
-			_update_high_scores()
-			print("Successfully fetched high scores")
+			# Parse and update high scores from response
+			if response_data != null and response_data.has("high_scores"):
+				var high_scores_dict = response_data["high_scores"]
+				# Update high scores dictionary
+				if high_scores_dict.has("Jump Rope"):
+					high_scores["Jump Rope"] = int(high_scores_dict["Jump Rope"])
+				if high_scores_dict.has("Sunny Says"):
+					high_scores["Sunny Says"] = int(high_scores_dict["Sunny Says"])
+				if high_scores_dict.has("Mine Race"):
+					high_scores["Mine Race"] = int(high_scores_dict["Mine Race"])
+				
+				# Update UI with fetched high scores
+				_update_high_scores()
+				print("High scores updated: ", high_scores)
+			
+			# User data is valid - authentication confirmed
+			_update_auth_status_validated()
 		else:
 			# No high scores yet, keep defaults
 			print("No high scores found, using defaults")
