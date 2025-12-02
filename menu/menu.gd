@@ -60,6 +60,12 @@ func _ready() -> void:
 	# Try polling once immediately
 	_check_for_pending_uid()
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_ENTER_TREE:
+		# Refresh high scores when entering the menu scene (e.g., returning from a game)
+		if UserData.has_user_id() and UserData.has_jwt_token():
+			_fetch_user_data_from_golang_api()
+
 func _update_high_scores() -> void:
 	var jump_rope_score = $Root/MainContainer/HighScoresContainer/JumpRopeScoreContainer/JumpRopeScore
 	var sunny_says_score = $Root/MainContainer/HighScoresContainer/SunnySaysScoreContainer/SunnySaysScore
@@ -217,6 +223,22 @@ func _on_api_request_completed(result: int, response_code: int, headers: PackedS
 		if parse_error == OK:
 			var response_data = json.data
 			print("Successfully validated JWT and retrieved user data")
+			
+			# Parse and update high scores from response
+			if response_data != null and response_data.has("high_scores"):
+				var high_scores_dict = response_data["high_scores"]
+				# Update high scores dictionary
+				if high_scores_dict.has("Jump Rope"):
+					high_scores["Jump Rope"] = int(high_scores_dict["Jump Rope"])
+				if high_scores_dict.has("Sunny Says"):
+					high_scores["Sunny Says"] = int(high_scores_dict["Sunny Says"])
+				if high_scores_dict.has("Mine Race"):
+					high_scores["Mine Race"] = int(high_scores_dict["Mine Race"])
+				
+				# Update UI with fetched high scores
+				_update_high_scores()
+				print("High scores updated: ", high_scores)
+			
 			# User data is valid - authentication confirmed
 			_update_auth_status_validated()
 		else:

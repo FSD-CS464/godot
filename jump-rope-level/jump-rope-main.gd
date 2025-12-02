@@ -63,6 +63,8 @@ func _on_rope_hit() -> void:
 	if rope.has_method("stop_swing"):
 		rope.stop_swing()
 	(hud as Node).call_deferred("show_game_over", score)
+	# Save high score to backend
+	_save_high_score(score)
 
 func _position_relative_to_viewport() -> void:
 	var vp_size := get_viewport_rect().size
@@ -80,3 +82,56 @@ func _position_relative_to_viewport() -> void:
 	if is_instance_valid(pet):
 		pet.position.x = center_x
 		pet.position.y = pet_y
+
+func _save_high_score(final_score: int) -> void:
+	if not UserData.has_user_id() or not UserData.has_jwt_token():
+		print("Cannot save high score: User not authenticated")
+		return
+	
+	# Create HTTPRequest node to make authenticated request
+	var http_request = HTTPRequest.new()
+	add_child(http_request)
+	http_request.request_completed.connect(_on_save_high_score_completed.bind(http_request))
+	
+	# Get backend API URL
+	var api_base_url = "http://localhost:8080"
+	var api_endpoint = api_base_url + "/api/v1/game/save"
+	
+	# Prepare JSON data
+	var json = JSON.new()
+	var data = {
+		"game_type": "Jump Rope",
+		"score": final_score
+	}
+	var json_string = json.stringify(data)
+	
+	# Prepare headers with JWT token
+	var headers = PackedStringArray([
+		"Authorization: Bearer " + UserData.get_jwt_token(),
+		"Content-Type: application/json"
+	])
+	
+	# Make POST request
+	var error = http_request.request(api_endpoint, headers, HTTPClient.METHOD_POST, json_string)
+	if error != OK:
+		print("Failed to create HTTP request: ", error)
+		http_request.queue_free()
+
+func _on_save_high_score_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray, http_request: HTTPRequest) -> void:
+	# Clean up the HTTPRequest node
+	if is_instance_valid(http_request):
+		http_request.queue_free()
+	
+	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
+		var json = JSON.new()
+		var parse_error = json.parse(body.get_string_from_utf8())
+		if parse_error == OK:
+			var response_data = json.data
+			if response_data != null and response_data.has("high_score"):
+				print("High score saved successfully: ", response_data["high_score"])
+			else:
+				print("High score saved successfully")
+		else:
+			print("Failed to parse response JSON")
+	else:
+		print("Failed to save high score. Response code: ", response_code)
