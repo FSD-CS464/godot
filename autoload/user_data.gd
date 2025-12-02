@@ -30,7 +30,6 @@ func has_jwt_token() -> bool:
 # Make an authenticated GET request
 func api_get(endpoint: String, callback: Callable) -> HTTPRequest:
 	if not has_jwt_token():
-		print("No JWT token available for API request")
 		return null
 	
 	var http_request = HTTPRequest.new()
@@ -45,7 +44,6 @@ func api_get(endpoint: String, callback: Callable) -> HTTPRequest:
 	
 	var error = http_request.request(full_url, headers, HTTPClient.METHOD_GET)
 	if error != OK:
-		print("Failed to create HTTP GET request: ", error)
 		http_request.queue_free()
 		return null
 	
@@ -54,7 +52,6 @@ func api_get(endpoint: String, callback: Callable) -> HTTPRequest:
 # Make an authenticated POST request
 func api_post(endpoint: String, data: Dictionary, callback: Callable) -> HTTPRequest:
 	if not has_jwt_token():
-		print("No JWT token available for API request")
 		return null
 	
 	var http_request = HTTPRequest.new()
@@ -72,7 +69,6 @@ func api_post(endpoint: String, data: Dictionary, callback: Callable) -> HTTPReq
 	
 	var error = http_request.request(full_url, headers, HTTPClient.METHOD_POST, json_string)
 	if error != OK:
-		print("Failed to create HTTP POST request: ", error)
 		http_request.queue_free()
 		return null
 	
@@ -90,8 +86,6 @@ func _on_api_request_completed(result: int, response_code: int, headers: PackedS
 		var parse_error = json.parse(body.get_string_from_utf8())
 		if parse_error == OK:
 			response_data = json.data
-		else:
-			print("Failed to parse response JSON")
 	
 	# Call the callback with result, response_code, and response_data
 	if callback.is_valid():
