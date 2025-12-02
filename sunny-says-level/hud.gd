@@ -7,6 +7,10 @@ var _score_label: Label
 var _game_over_panel: PanelContainer
 var _final_score_label: Label
 var _return_button: Button
+var _wait_choice_panel: PanelContainer
+var _wait_button: Button
+var _singleplayer_button: Button
+var _wait_label: Label
 
 func _ready() -> void:
 	_countdown_label = $Root/CountdownLabel
@@ -14,8 +18,18 @@ func _ready() -> void:
 	_game_over_panel = $Root/GameOverPanel
 	_final_score_label = $Root/GameOverPanel/VBox/FinalScoreLabel
 	_return_button = $Root/GameOverPanel/VBox/ReturnButton
-	# Connect return button
+	_wait_choice_panel = $Root/WaitChoicePanel
+	_wait_label = $Root/WaitChoicePanel/VBox/WaitLabel
+	_wait_button = $Root/WaitChoicePanel/VBox/WaitButton
+	_singleplayer_button = $Root/WaitChoicePanel/VBox/SingleplayerButton
+	
+	# Connect buttons
 	_return_button.pressed.connect(_on_return_button_pressed)
+	_wait_button.pressed.connect(_on_wait_button_pressed)
+	_singleplayer_button.pressed.connect(_on_singleplayer_button_pressed)
+	
+	# Hide wait choice panel initially
+	_wait_choice_panel.visible = false
 	# Apply font if provided
 	if ui_font:
 		var font_theme := Theme.new()
@@ -41,6 +55,29 @@ func show_game_over(score: int) -> void:
 	_game_over_panel.visible = true
 	show_countdown_text("", false)
 
+func show_wait_choice() -> void:
+	_wait_choice_panel.visible = true
+
+func hide_wait_choice() -> void:
+	_wait_choice_panel.visible = false
+
+func show_searching(show: bool) -> void:
+	if show:
+		_countdown_label.text = "Searching for match..."
+		_countdown_label.visible = true
+	else:
+		_countdown_label.text = ""
+		_countdown_label.visible = false
+
 func _on_return_button_pressed() -> void:
 	get_tree().change_scene_to_file("res://menu/menu.tscn")
+
+signal wait_chosen
+signal singleplayer_chosen
+
+func _on_wait_button_pressed() -> void:
+	wait_chosen.emit()
+
+func _on_singleplayer_button_pressed() -> void:
+	singleplayer_chosen.emit()
 

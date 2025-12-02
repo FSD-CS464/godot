@@ -95,3 +95,13 @@ func disable_input() -> void:
 
 func enable_input() -> void:
 	input_enabled = true
+
+func set_cloud_frame(frame: int) -> void:
+	if _cloud_sprite:
+		_cloud_sprite.frame = clamp(frame, 0, 1)
+
+func set_frame(frame: int) -> void:
+	current_frame = frame
+	if _pet_sprite:
+		_pet_sprite.stop()
+		_pet_sprite.frame = current_frame
