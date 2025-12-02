@@ -63,6 +63,8 @@ func _on_rope_hit() -> void:
 	if rope.has_method("stop_swing"):
 		rope.stop_swing()
 	(hud as Node).call_deferred("show_game_over", score)
+	# Save high score to backend
+	_save_high_score(score)
 
 func _position_relative_to_viewport() -> void:
 	var vp_size := get_viewport_rect().size
@@ -80,3 +82,24 @@ func _position_relative_to_viewport() -> void:
 	if is_instance_valid(pet):
 		pet.position.x = center_x
 		pet.position.y = pet_y
+
+func _save_high_score(final_score: int) -> void:
+	if not UserData.has_user_id() or not UserData.has_jwt_token():
+		print("Cannot save high score: User not authenticated")
+		return
+	
+	var data = {
+		"game_type": "Jump Rope",
+		"score": final_score
+	}
+	
+	UserData.api_post("/api/v1/game/save", data, _on_save_high_score_completed)
+
+func _on_save_high_score_completed(result: int, response_code: int, response_data) -> void:
+	if result == HTTPRequest.RESULT_SUCCESS and response_code == 200:
+		if response_data != null and response_data.has("high_score"):
+			print("High score saved successfully: ", response_data["high_score"])
+		else:
+			print("High score saved successfully")
+	else:
+		print("Failed to save high score. Response code: ", response_code)
