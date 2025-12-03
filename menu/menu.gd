@@ -1,9 +1,11 @@
 extends CanvasLayer
 
-var _jump_rope_button: Button
-var _sunny_says_button: Button
-var _auth_status_label: Label
+var _jump_rope_button: TextureButton
+var _sunny_says_button: TextureButton
+var _how_to_play_button: TextureButton
 var _energy_label: Label
+var _jump_rope_high_score_label: Label
+var _sunny_says_high_score_label: Label
 
 var high_scores: Dictionary = {
 	"Jump Rope": 0,
@@ -22,23 +24,26 @@ const JUMP_ROPE_ENERGY_COST: int = 10
 const SUNNY_SAYS_ENERGY_COST: int = 15
 
 func _ready() -> void:
-	_jump_rope_button = $Root/MainContainer/ButtonsContainer/JumpRopeButton
-	_sunny_says_button = $Root/MainContainer/ButtonsContainer/SunnySaysButton
-	_auth_status_label = $Root/AuthStatusLabel
-	_energy_label = $Root/EnergyLabel
+	_jump_rope_button = $Root/LeftContainer/JumpRopeContainer/JumpRopeButton
+	_sunny_says_button = $Root/LeftContainer/SunnySaysContainer/SunnySaysButton
+	_how_to_play_button = $Root/HowToPlayButton
+	_energy_label = $Root/EnergyContainer/EnergyLabel
+	_jump_rope_high_score_label = $Root/LeftContainer/JumpRopeContainer/JumpRopeInfo/HighScoreLabel
+	_sunny_says_high_score_label = $Root/LeftContainer/SunnySaysContainer/SunnySaysInfo/HighScoreLabel
 	
 	# Connect button signals
 	_jump_rope_button.pressed.connect(_on_jump_rope_pressed)
 	_sunny_says_button.pressed.connect(_on_sunny_says_pressed)
-	
-	# Initialize auth status label
-	_update_auth_status()
+	_how_to_play_button.pressed.connect(_on_how_to_play_pressed)
 	
 	# Update high score displays (will be updated from API if authenticated)
 	_update_high_scores()
 	
 	# Initialize energy display
 	_update_energy_display()
+	
+	# Initialize button states based on current energy
+	_update_button_states()
 	
 	# Check if we already have a UID from persistent storage
 	if UserData.has_user_id():
@@ -72,11 +77,10 @@ func _notification(what: int) -> void:
 			_fetch_energy_from_api()
 
 func _update_high_scores() -> void:
-	var jump_rope_score = $Root/MainContainer/HighScoresContainer/JumpRopeScoreContainer/JumpRopeScore
-	var sunny_says_score = $Root/MainContainer/HighScoresContainer/SunnySaysScoreContainer/SunnySaysScore
-	
-	jump_rope_score.text = str(high_scores["Jump Rope"])
-	sunny_says_score.text = str(high_scores["Sunny Says"])
+	if _jump_rope_high_score_label:
+		_jump_rope_high_score_label.text = "High Score: " + str(high_scores["Jump Rope"])
+	if _sunny_says_high_score_label:
+		_sunny_says_high_score_label.text = "High Score: " + str(high_scores["Sunny Says"])
 
 func _on_jump_rope_pressed() -> void:
 	# Check and deduct energy before starting game
@@ -90,16 +94,8 @@ func _on_sunny_says_pressed() -> void:
 		return
 	get_tree().change_scene_to_file("res://sunny-says-level/sunny_says_main.tscn")
 
-func _update_auth_status() -> void:
-	var uid = UserData.get_user_id()
-	if not uid.is_empty():
-		# Authentication successful - show green status and UID
-		_auth_status_label.text = "Auth: OK | UID: " + uid
-		_auth_status_label.modulate = Color(0.2, 1.0, 0.2)  # Green color
-	else:
-		# Not authenticated yet
-		_auth_status_label.text = "Auth: Waiting..."
-		_auth_status_label.modulate = Color(1.0, 1.0, 1.0)  # White color
+func _on_how_to_play_pressed() -> void:
+	get_tree().change_scene_to_file("res://menu/how_to_play.tscn")
 
 # Poll JavaScript for pending UID
 func _check_for_pending_uid() -> void:
@@ -168,7 +164,6 @@ func set_user_id(uid: String, token: String = "") -> void:
 	UserData.set_user_id(uid)
 	if not token.is_empty():
 		UserData.set_jwt_token(token)
-	_update_auth_status()
 	_initialize_user_data()
 
 func _initialize_user_data() -> void:
@@ -181,7 +176,6 @@ func _initialize_user_data() -> void:
 
 func _fetch_high_scores_from_api() -> void:
 	if not UserData.has_jwt_token():
-		_update_auth_status_with_error("No token")
 		return
 	
 	# Use UserData API helper to fetch high scores
@@ -190,7 +184,6 @@ func _fetch_high_scores_from_api() -> void:
 func _on_high_scores_fetched(result: int, response_code: int, response_data) -> void:
 	# Check if request was successful
 	if result != HTTPRequest.RESULT_SUCCESS:
-		_update_auth_status_with_error("Network error")
 		return
 	
 	# Validate JWT by checking response code
@@ -214,31 +207,9 @@ func _on_high_scores_fetched(result: int, response_code: int, response_data) -> 
 			current_energy = int(response_data["energy"])
 			_update_energy_display()
 			_update_button_states()
-		
-		# User data is valid - authentication confirmed
-		_update_auth_status_validated()
 	elif response_code == 401:
-		# JWT is invalid or expired
-		_update_auth_status_with_error("Auth failed")
-		# Clear invalid token
+		# JWT is invalid or expired - clear invalid token
 		UserData.set_jwt_token("")
-	else:
-		_update_auth_status_with_error("Server error")
-
-func _update_auth_status_validated() -> void:
-	var uid = UserData.get_user_id()
-	if not uid.is_empty():
-		_auth_status_label.text = "Auth: OK | UID: " + uid
-		_auth_status_label.modulate = Color(0.2, 1.0, 0.2)  # Green color
-
-func _update_auth_status_with_error(error_msg: String) -> void:
-	var uid = UserData.get_user_id()
-	if not uid.is_empty():
-		_auth_status_label.text = "Auth: " + error_msg + " | UID: " + uid
-		_auth_status_label.modulate = Color(1.0, 0.5, 0.2)  # Orange/red color
-	else:
-		_auth_status_label.text = "Auth: " + error_msg
-		_auth_status_label.modulate = Color(1.0, 0.2, 0.2)  # Red color
 
 func _fetch_energy_from_api() -> void:
 	if not UserData.has_jwt_token():
@@ -261,20 +232,12 @@ func _update_energy_display() -> void:
 		_energy_label.text = "Energy: " + str(current_energy)
 
 func _update_button_states() -> void:
-	# Disable buttons if insufficient energy
+	# Disable buttons if insufficient energy (disabled texture will be used automatically)
 	if _jump_rope_button:
 		_jump_rope_button.disabled = current_energy < JUMP_ROPE_ENERGY_COST
-		if current_energy < JUMP_ROPE_ENERGY_COST:
-			_jump_rope_button.modulate = Color(0.5, 0.5, 0.5)  # Darken button
-		else:
-			_jump_rope_button.modulate = Color(1.0, 1.0, 1.0)  # Normal color
 	
 	if _sunny_says_button:
 		_sunny_says_button.disabled = current_energy < SUNNY_SAYS_ENERGY_COST
-		if current_energy < SUNNY_SAYS_ENERGY_COST:
-			_sunny_says_button.modulate = Color(0.5, 0.5, 0.5)  # Darken button
-		else:
-			_sunny_says_button.modulate = Color(1.0, 1.0, 1.0)  # Normal color
 
 func _check_and_deduct_energy(game_type: String, energy_cost: int) -> bool:
 	# Check if user has enough energy

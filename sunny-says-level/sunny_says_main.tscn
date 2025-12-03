@@ -1,9 +1,10 @@
-[gd_scene load_steps=5 format=3 uid="uid://crjfgr70yt8ur"]
+[gd_scene load_steps=6 format=3 uid="uid://crjfgr70yt8ur"]
 
 [ext_resource type="Script" uid="uid://bhavi6eobsifk" path="res://sunny-says-level/sunny_says_main.gd" id="1_tviv4"]
 [ext_resource type="PackedScene" uid="uid://cco7nvl2mlpcm" path="res://sunny-says-level/pet.tscn" id="2_yirq7"]
 [ext_resource type="PackedScene" uid="uid://btiiskf5qul62" path="res://sunny-says-level/sunny.tscn" id="3_eykvt"]
 [ext_resource type="PackedScene" path="res://sunny-says-level/hud.tscn" id="4_hud"]
+[ext_resource type="Texture2D" uid="uid://d3gt6i5dvs2ib" path="res://assets/UI/sunny says background.png" id="5_uj840"]
 
 [node name="sunny-says-main" type="Node2D"]
 script = ExtResource("1_tviv4")
@@ -15,3 +16,8 @@ position = Vector2(575, 200)
 position = Vector2(575, 120)
 
 [node name="HUD" parent="." instance=ExtResource("4_hud")]
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+z_index = -20
+position = Vector2(575, 350)
+texture = ExtResource("5_uj840")

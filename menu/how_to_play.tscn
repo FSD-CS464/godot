@@ -1,0 +1,125 @@
+[gd_scene load_steps=5 format=3 uid="uid://c254pg8e14yg8"]
+
+[ext_resource type="Script" uid="uid://devkg3fge3gx0" path="res://menu/how_to_play.gd" id="1_how_to_play"]
+[ext_resource type="FontFile" uid="uid://52bkl2ct7vw6" path="res://fonts/TsunagiGothic.ttf" id="2_font"]
+[ext_resource type="Texture2D" uid="uid://1tpcakbtaqm1" path="res://assets/UI/Menu Background.png" id="3_bg"]
+[ext_resource type="Texture2D" uid="uid://csg4kwsa81p4d" path="res://assets/UI/Back Button.png" id="4_back"]
+
+[node name="HowToPlay" type="CanvasLayer"]
+script = ExtResource("1_how_to_play")
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Background" type="TextureRect" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_bg")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="BackButton" type="TextureButton" parent="Root"]
+z_index = 5
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.037
+anchor_top = 0.078
+anchor_right = 0.183
+anchor_bottom = 0.139
+offset_left = -14.624
+offset_top = -15.544
+offset_right = 9.18399
+offset_bottom = 17.928
+texture_normal = ExtResource("4_back")
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="Root"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 40.0
+offset_right = 200.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 64
+text = "How to play"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="InstructionsContainer" type="VBoxContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -451.0
+offset_top = -214.0
+offset_right = 449.0
+offset_bottom = 243.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 40
+alignment = 1
+
+[node name="JumpRopeSection" type="HBoxContainer" parent="Root/InstructionsContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="JumpRopeTitle" type="Label" parent="Root/InstructionsContainer/JumpRopeSection"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 64
+text = "Jump Rope:"
+vertical_alignment = 1
+
+[node name="JumpRopeInstructions" type="Label" parent="Root/InstructionsContainer/JumpRopeSection"]
+custom_minimum_size = Vector2(500, 200)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 40
+text = "Press Spacebar or click the screen to Jump"
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="SunnySaysSection" type="HBoxContainer" parent="Root/InstructionsContainer"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="SunnySaysTitle" type="Label" parent="Root/InstructionsContainer/SunnySaysSection"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 64
+text = "Sunny Says:"
+vertical_alignment = 1
+
+[node name="SunnySaysInstructions" type="Label" parent="Root/InstructionsContainer/SunnySaysSection"]
+custom_minimum_size = Vector2(500, 200)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 40
+text = "Use the left and right arrow keys to raise the symbols in your left and right hands. Match the symbols Sunny raises. Don't be too slow!"
+vertical_alignment = 1
+autowrap_mode = 2
