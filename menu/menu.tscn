@@ -1,7 +1,14 @@
-[gd_scene load_steps=3 format=3 uid="uid://dm3xptcpjwve8"]
+[gd_scene load_steps=10 format=3 uid="uid://dm3xptcpjwve8"]
 
 [ext_resource type="Script" uid="uid://b82eadi58cpfs" path="res://menu/menu.gd" id="1_menu"]
 [ext_resource type="FontFile" uid="uid://52bkl2ct7vw6" path="res://fonts/TsunagiGothic.ttf" id="2_font"]
+[ext_resource type="Texture2D" uid="uid://d23u2xvaaya3" path="res://assets/UI/Jump Rope Button.png" id="3_jump_rope"]
+[ext_resource type="Texture2D" uid="uid://bqxs7os5vddnf" path="res://assets/UI/Sunny Says Button.png" id="4_sunny_says"]
+[ext_resource type="Texture2D" uid="uid://cifhhb1kqsx5w" path="res://assets/UI/Jump Rope Button Disabled.png" id="5_6fswf"]
+[ext_resource type="Texture2D" uid="uid://cfrqnuhspngn5" path="res://assets/UI/How to play Button.png" id="5_how_to_play"]
+[ext_resource type="Texture2D" uid="uid://br4wl0ugt5a4q" path="res://assets/UI/Sunny Says Button Disabled.png" id="7_bc54p"]
+[ext_resource type="Texture2D" uid="uid://1tpcakbtaqm1" path="res://assets/UI/Menu Background.png" id="7_bg"]
+[ext_resource type="Texture2D" uid="uid://8nf70jntwxbw" path="res://assets/jump-rope/pet/bunny_neutral.png" id="8_6fswf"]
 
 [node name="Menu" type="CanvasLayer"]
 script = ExtResource("1_menu")
@@ -14,21 +21,19 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="AuthStatusLabel" type="Label" parent="Root"]
+[node name="Background" type="TextureRect" parent="Root"]
+z_index = -20
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
+anchors_preset = 15
 anchor_right = 1.0
-offset_left = -380.0
-offset_bottom = 40.0
-grow_horizontal = 0
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 32
-text = "Auth: Waiting..."
-horizontal_alignment = 2
-vertical_alignment = 1
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("7_bg")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="EnergyLabel" type="Label" parent="Root"]
+[node name="EnergyContainer" type="HBoxContainer" parent="Root"]
 layout_mode = 1
 offset_left = 20.0
 offset_top = 20.0
@@ -36,97 +41,173 @@ offset_right = 300.0
 offset_bottom = 60.0
 grow_horizontal = 0
 grow_vertical = 0
+theme_override_constants/separation = 8
+
+[node name="EnergyLabel" type="Label" parent="Root/EnergyContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 32
-text = "Energy: 30"
+theme_override_font_sizes/font_size = 48
+text = "Energy: 50"
 vertical_alignment = 1
 
-[node name="MainContainer" type="HBoxContainer" parent="Root"]
+[node name="LeftContainer" type="VBoxContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 100.0
+offset_top = -200.0
+offset_right = 500.0
+offset_bottom = 200.0
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_constants/separation = 30
+alignment = 1
+
+[node name="JumpRopeContainer" type="Control" parent="Root/LeftContainer"]
+custom_minimum_size = Vector2(400, 120)
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="JumpRopeButton" type="TextureButton" parent="Root/LeftContainer/JumpRopeContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture_normal = ExtResource("3_jump_rope")
+texture_disabled = ExtResource("5_6fswf")
+stretch_mode = 5
+
+[node name="JumpRopeInfo" type="VBoxContainer" parent="Root/LeftContainer/JumpRopeContainer"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = 60.0
+offset_top = -47.5
+offset_right = 410.0
+offset_bottom = 47.5
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_constants/separation = 5
+alignment = 2
+
+[node name="HighScoreLabel" type="Label" parent="Root/LeftContainer/JumpRopeContainer/JumpRopeInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 44
+text = "High Score: 0"
+vertical_alignment = 1
+
+[node name="CostLabel" type="Label" parent="Root/LeftContainer/JumpRopeContainer/JumpRopeInfo"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 44
+text = "Cost: 10 Energy"
+vertical_alignment = 1
+
+[node name="SunnySaysContainer" type="Control" parent="Root/LeftContainer"]
+custom_minimum_size = Vector2(400, 120)
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="SunnySaysButton" type="TextureButton" parent="Root/LeftContainer/SunnySaysContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture_normal = ExtResource("4_sunny_says")
+texture_disabled = ExtResource("7_bc54p")
+stretch_mode = 5
+
+[node name="SunnySaysInfo" type="VBoxContainer" parent="Root/LeftContainer/SunnySaysContainer"]
+layout_mode = 1
+anchors_preset = 6
+anchor_left = 1.0
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_left = 60.0
+offset_top = -47.5
+offset_right = 410.0
+offset_bottom = 47.5
+grow_horizontal = 0
+grow_vertical = 2
+theme_override_constants/separation = 5
+
+[node name="HighScoreLabel" type="Label" parent="Root/LeftContainer/SunnySaysContainer/SunnySaysInfo"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 44
+text = "High Score: 0"
+vertical_alignment = 1
+
+[node name="CostLabel" type="Label" parent="Root/LeftContainer/SunnySaysContainer/SunnySaysInfo"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+theme_override_fonts/font = ExtResource("2_font")
+theme_override_font_sizes/font_size = 44
+text = "Cost: 15 Energy"
+vertical_alignment = 1
+
+[node name="PetContainer" type="Control" parent="Root"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -600.0
-offset_top = -300.0
-offset_right = 600.0
-offset_bottom = 300.0
+offset_left = 200.0
+offset_top = -200.0
+offset_right = 800.0
+offset_bottom = 200.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 0
-alignment = 1
 
-[node name="ButtonsContainer" type="VBoxContainer" parent="Root/MainContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 50
-alignment = 1
+[node name="PetSprite" type="TextureRect" parent="Root/PetContainer"]
+z_index = -10
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -221.0
+offset_top = -180.0
+offset_right = 179.0
+offset_bottom = 220.0
+grow_horizontal = 2
+grow_vertical = 2
+scale = Vector2(0.8, 0.8)
+texture = ExtResource("8_6fswf")
+expand_mode = 1
+stretch_mode = 5
 
-[node name="JumpRopeButton" type="Button" parent="Root/MainContainer/ButtonsContainer"]
-custom_minimum_size = Vector2(400, 100)
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 88
-text = "Jump Rope"
-
-[node name="SunnySaysButton" type="Button" parent="Root/MainContainer/ButtonsContainer"]
-custom_minimum_size = Vector2(400, 100)
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 88
-text = "Sunny Says"
-
-[node name="HighScoresContainer" type="VBoxContainer" parent="Root/MainContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/separation = 50
-alignment = 1
-
-[node name="HighScoresTitle" type="Label" parent="Root/MainContainer/HighScoresContainer"]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 88
-text = "High Scores"
-horizontal_alignment = 1
-
-[node name="JumpRopeScoreContainer" type="HBoxContainer" parent="Root/MainContainer/HighScoresContainer"]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_constants/separation = 20
-
-[node name="JumpRopeLabel" type="Label" parent="Root/MainContainer/HighScoresContainer/JumpRopeScoreContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 88
-text = "Jump Rope:"
-
-[node name="JumpRopeScore" type="Label" parent="Root/MainContainer/HighScoresContainer/JumpRopeScoreContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 88
-text = "0"
-
-[node name="SunnySaysScoreContainer" type="HBoxContainer" parent="Root/MainContainer/HighScoresContainer"]
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_constants/separation = 20
-
-[node name="SunnySaysLabel" type="Label" parent="Root/MainContainer/HighScoresContainer/SunnySaysScoreContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 88
-text = "Sunny Says:"
-
-[node name="SunnySaysScore" type="Label" parent="Root/MainContainer/HighScoresContainer/SunnySaysScoreContainer"]
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_fonts/font = ExtResource("2_font")
-theme_override_font_sizes/font_size = 88
-text = "0"
+[node name="HowToPlayButton" type="TextureButton" parent="Root"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -200.0
+offset_top = -80.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+texture_normal = ExtResource("5_how_to_play")
+stretch_mode = 5
