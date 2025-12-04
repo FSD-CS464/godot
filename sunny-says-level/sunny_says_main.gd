@@ -99,7 +99,7 @@ func _try_connect_multiplayer() -> void:
 	websocket_client.error_occurred.connect(_on_websocket_error)
 	
 	# Connect to server (convert http to ws)
-	var api_base_url = "http://localhost:8080"
+	var api_base_url = UserData.API_BASE_URL
 	var ws_url = api_base_url.replace("http://", "ws://").replace("https://", "wss://") + "/ws/sunny-says"
 	websocket_client.connect_to_server(ws_url, UserData.get_jwt_token())
 	

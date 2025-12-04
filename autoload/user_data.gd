@@ -5,7 +5,7 @@ var user_id: String = ""
 var jwt_token: String = ""
 
 # API configuration
-const API_BASE_URL = "http://localhost:8080"  # TODO: Update for production
+const API_BASE_URL = "https://bunnyhabits.click"
 
 func set_user_id(uid: String) -> void:
 	user_id = uid
